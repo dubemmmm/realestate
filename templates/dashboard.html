@@ -1,0 +1,854 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-dark: #2D3748;
+        --primary-light: #4A5568;
+        --accent: #718096;
+    }
+    .leaflet-container { height: 100vh; width: 100%; }
+    .custom-marker {
+        border: 2px solid var(--primary-light);
+        border-radius: 50%;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .custom-marker img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+    }
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 10px;
+        z-index: 2000;
+        overflow-y: auto;
+    }
+    .modal-content {
+        background: white;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 12px;
+        margin: 10px;
+        padding: 0;
+        position: relative;
+    }
+    .modal-close-button {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+        line-height: 1;
+        text-align: center;
+        color: #4A5568;
+        background: rgba(255,255,255,0.8);
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 9999;
+        pointer-events: auto;
+    }
+    .modal-close-button:hover {
+        background: rgba(255,255,255,1);
+        color: #2D3748;
+    }
+    .image-gallery {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        height: 200px;
+        width: 100%;
+    }
+    .image-gallery img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .gallery-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0,0,0,0.4);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 50%;
+    }
+    .gallery-nav:hover {
+        background: rgba(0,0,0,0.6);
+    }
+    .gallery-nav.prev { left: 8px; }
+    .gallery-nav.next { right: 8px; }
+    .gallery-indicators {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+    }
+    .gallery-indicator {
+        width: 8px;
+        height: 8px;
+        background: rgba(255,255,255,0.6);
+        border-radius: 50%;
+        cursor: pointer;
+    }
+    .gallery-indicator.active {
+        background: rgba(255,255,255,1);
+    }
+    .contact-display {
+        display: none;
+        margin-top: 16px;
+        padding: 12px;
+        background: #EDF2F7;
+        border-radius: 12px;
+        border: 1px solid rgba(45,55,72,0.1);
+    }
+    .contact-display.active {
+        display: block;
+    }
+    .whatsapp-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 8px;
+        padding: 8px 16px;
+        font-size: 14px;
+        background: #25D366;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+    .whatsapp-button:hover {
+        background: #128C7E;
+        color: white;
+        text-decoration: none;
+    }
+    .whatsapp-icon {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
+    }
+    .contact-info {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .configurations-section {
+        margin: 24px 0;
+    }
+    .configurations-grid {
+        display: grid;
+        gap: 16px;
+        margin-top: 16px;
+    }
+    .configuration-card {
+        border: 2px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 16px;
+        background: #F9FAFB;
+        transition: all 0.3s ease;
+    }
+    .configuration-card:hover {
+        border-color: var(--primary-light);
+        box-shadow: 0 4px 12px rgba(45,55,72,0.1);
+    }
+    .configuration-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #E5E7EB;
+    }
+    .configuration-type {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary-dark);
+    }
+    .configuration-price {
+        font-size: 16px;
+        font-weight: 600;
+        color: #059669;
+        background: #D1FAE5;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+    .configuration-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+    }
+    .detail-item {
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        border: 1px solid #E5E7EB;
+    }
+    .detail-label {
+        font-size: 12px;
+        color: #6B7280;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+    .detail-value {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+    @media (max-width: 768px) {
+        .configurations-grid {
+            gap: 12px;
+        }
+        .configuration-card {
+            padding: 12px;
+        }
+        .configuration-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .configuration-type {
+            font-size: 16px;
+        }
+        .configuration-price {
+            font-size: 14px;
+        }
+        .configuration-details {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .detail-item {
+            padding: 8px;
+        }
+        .detail-value {
+            font-size: 14px;
+        }
+        .contact-info {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .whatsapp-button {
+            margin-left: 0;
+            margin-top: 8px;
+        }
+    }
+    .filter-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        width: 100%;
+        max-width: 320px;
+        height: 100%;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+    }
+    .filter-header {
+        padding: 32px 24px;
+        color: white;
+    }
+    .filter-content {
+        background: rgba(255,255,255,0.95);
+        padding: 32px;
+    }
+    .filter-section {
+        background: rgba(45,55,72,0.05);
+        border: 1px solid rgba(45,55,72,0.1);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    .filter-input {
+        width: 100%;
+        border: 2px solid rgba(45,55,72,0.2);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    .range-display {
+        font-size: 12px;
+        color: #666;
+        margin-top: 8px;
+    }
+    .control-button {
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: white;
+        border: none;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        box-shadow: 0 8px 20px rgba(45,55,72,0.3);
+        cursor: pointer;
+    }
+    .search-box {
+        position: fixed;
+        z-index: 1000;
+        padding: 8px;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        cursor: move;
+    }
+    .search-input {
+        border: 2px solid rgba(45,55,72,0.2);
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 14px;
+        width: 100%;
+        max-width: 300px;
+    }
+    .map-controls {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .map-controls .control-button {
+        display: block;
+        text-align: center;
+    }
+    .map-controls a.control-button {
+        text-decoration: none;
+        text-align: center;
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="relative h-screen">
+    <div id="map" class="leaflet-container"></div>
+    
+    <!-- Search Box -->
+    <div id="searchBox" class="search-box">
+        <input
+            type="text" 
+            id="searchInput" 
+            placeholder="🔍 Search properties..."
+            class="search-input"
+            
+        />
+    </div>
+    
+    <!-- Map Controls -->
+    <div class="map-controls">
+        <button onclick="toggleFilters()" class="control-button">🔍 Filters</button>
+        <button onclick="resetMap()" class="control-button">🏠 Reset View</button>
+        <button onclick="refreshData()" class="control-button">🔄 Refresh</button>
+        <button id="propertyCount" class="control-button">📊 Loading...</button>
+    </div>
+    
+    <!-- Filter Sidebar -->
+    <div id="filterSidebar" class="filter-sidebar" style="display: none;">
+        <div class="filter-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg md:text-xl font-bold mb-1">🔍 Property Filters</h3>
+                    <p class="text-xs md:text-sm opacity-90">Refine your search</p>
+                </div>
+                <button onclick="toggleFilters()" class="text-white hover:text-gray-200 text-xl md:text-2xl font-bold">×</button>
+            </div>
+        </div>
+        <div class="filter-content">
+            <div class="filter-section">
+                <label class="filter-label text-sm md:text-base">💰 Price Range</label>
+                <div class="flex gap-2 md:gap-3">
+                    <input type="number" id="minPrice" class="filter-input flex-1 text-sm md:text-base" placeholder="Min Price" />
+                    <input type="number" id="maxPrice" class="filter-input flex-1 text-sm md:text-base" placeholder="Max Price" />
+                </div>
+                <div class="text-xs text-gray-500 mt-2" id="priceRangeDisplay">₦0 – No Max</div>
+            </div>
+            <div class="filter-section">
+                <label class="filter-label text-sm md:text-base">🛏️ Bedrooms Range</label>
+                <div class="flex gap-2 md:gap-3">
+                    <input type="number" id="minBedrooms" class="filter-input flex-1 text-sm md:text-base" placeholder="Min" min="0" />
+                    <input type="number" id="maxBedrooms" class="filter-input flex-1 text-sm md:text-base" placeholder="Max" min="0" />
+                </div>
+                <div class="range-display" id="bedroomsRangeDisplay">Any number of bedrooms</div>
+            </div>
+            <div class="filter-section">
+                <label class="filter-label text-sm md:text-base">🚿 Bathrooms Range</label>
+                <div class="flex gap-2 md:gap-3">
+                    <input type="number" id="minBathrooms" class="filter-input flex-1 text-sm md:text-base" placeholder="Min" min="0" />
+                    <input type="number" id="maxBathrooms" class="filter-input flex-1 text-sm md:text-base" placeholder="Max" min="0" />
+                </div>
+                <div class="range-display" id="bathroomsRangeDisplay">Any number of bathrooms</div>
+            </div>
+            <div class="flex gap-2 md:gap-3 mt-4 md:mt-6">
+                <button onclick="clearFilters()" class="flex-1 bg-gray-100 text-gray-700 py-2 md:py-3 rounded-12 text-sm md:text-base hover:bg-gray-200">Clear All</button>
+                <button onclick="applyFilters()" class="flex-1 bg-gray-800 text-white py-2 md:py-3 rounded-12 text-sm md:text-base hover:bg-gray-700">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Property Modal -->
+    <div id="propertyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <button id="modalCloseButton" onclick="closeModal()" class="modal-close-button">×</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let map, properties = [], filteredProperties = [];
+    let currentImageIndex = 0;
+
+    function initMap() {
+        map = L.map('map', { zoomControl: false }).setView([6.5244, 3.3792], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+        L.control.scale().addTo(map);
+    }
+
+    async function fetchProperties() {
+        try {
+            const response = await fetch('{% url "properties_api" %}');
+            if (!response.ok) throw new Error('Failed to fetch properties');
+            properties = await response.json();
+            filteredProperties = properties;
+            updateMap();
+            updatePropertyCount();
+        } catch (error) {
+            console.error('Error fetching properties:', error);
+            alert('Error fetching properties. Please try again later.');
+        }
+    }
+
+    function updateMap() {
+        map.eachLayer(layer => {
+            if (layer instanceof L.Marker || layer instanceof L.MarkerClusterGroup) {
+                map.removeLayer(layer);
+            }
+        });
+        
+        const cluster = L.markerClusterGroup({
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true,
+            spiderfyOnMaxZoom: true,
+            removeOutsideVisibleBounds: true,
+            maxClusterRadius: 40
+        });
+        
+        const validMarkers = [];
+        filteredProperties.forEach(property => {
+            if (!property.latitude || !property.longitude || isNaN(property.latitude) || isNaN(property.longitude)) {
+                console.warn(`Invalid coordinates for ${property.name}`);
+                return;
+            }
+            const icon = L.divIcon({
+                html: `<div class="custom-marker"><img src="${property.thumbnail || 'https://via.placeholder.com/40'}" alt="${property.name}"/></div>`,
+                className: 'custom-marker-container',
+                iconSize: [44, 44],
+                iconAnchor: [22, 22]
+            });
+            const marker = L.marker([property.latitude, property.longitude], { icon });
+            marker.on('click', () => showPropertyModal(property));
+            cluster.addLayer(marker);
+            validMarkers.push(marker);
+        });
+        
+        map.addLayer(cluster);
+        if (validMarkers.length > 0) {
+            const group = new L.featureGroup(validMarkers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+
+    function extractPhoneNumber(contact) {
+        // Extract phone number from contact string (format: "Name - Phone")
+        if (contact && contact.includes(' - ')) {
+            return contact.split(' - ')[1].trim();
+        }
+        return contact;
+    }
+
+    function formatWhatsAppNumber(phoneNumber) {
+        // Remove all non-numeric characters
+        let cleanNumber = phoneNumber.replace(/\D/g, '');
+        
+        // If it starts with 0, replace with country code (assuming Nigeria +234)
+        if (cleanNumber.startsWith('0')) {
+            cleanNumber = '234' + cleanNumber.substring(1);
+        }
+        
+        // If it doesn't start with country code, add Nigeria's code
+        if (!cleanNumber.startsWith('234')) {
+            cleanNumber = '234' + cleanNumber;
+        }
+        
+        return cleanNumber;
+    }
+
+    function createModalHTML(property) {
+        console.log('Creating modal for property:', property.id, 'Images:', property.images);
+        currentImageIndex = 0;
+        
+        const amenities = property.amenities.map(a => 
+            `<span class="bg-indigo-100 text-indigo-800 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm">${a}</span>`
+        ).join('');
+        
+        const images = Array.isArray(property.images) && property.images.length > 0 
+            ? property.images 
+            : [property.thumbnail || 'https://via.placeholder.com/200'];
+        
+        // Create configurations display
+        const configurationsHTML = property.configurations.length > 0 
+            ? property.configurations.map(config => `
+                <div class="configuration-card">
+                    <div class="configuration-header">
+                        <div class="configuration-type">${config.type}</div>
+                        <div class="configuration-price">${config.price || 'TBD'}</div>
+                    </div>
+                    <div class="configuration-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Bedrooms</div>
+                            <div class="detail-value">${config.bedrooms || 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Bathrooms</div>
+                            <div class="detail-value">${config.bathrooms || 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Square Feet</div>
+                            <div class="detail-value">${(config.square_footage || 0).toLocaleString()}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')
+            : '<div class="text-center text-gray-500 py-8">No configurations available</div>';
+        
+        // Extract phone number and prepare WhatsApp link
+        const phoneNumber = extractPhoneNumber(property.contact);
+        const whatsappNumber = formatWhatsAppNumber(phoneNumber);
+        const whatsappMessage = encodeURIComponent(`Hi! I'm interested in the property: ${property.name} at ${property.address}. Could you please provide more information?`);
+        const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+        
+        return `
+            <div class="bg-white rounded-lg p-6 shadow-lg">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">${property.name}</h2>
+                <div class="image-gallery">
+                    <img src="${images[currentImageIndex]}" alt="${property.name}" id="galleryImage"/>
+                    ${images.length > 1 ? `
+                    <button class="gallery-nav prev" onclick="changeImage(-1, ${property.id})">‹</button>
+                    <button class="gallery-nav next" onclick="changeImage(1, ${property.id})">›</button>
+                    <div class="gallery-indicators">
+                        ${images.map((_, idx) => 
+                            `<div class="gallery-indicator ${idx === currentImageIndex ? 'active' : ''}" 
+                                  onclick="setImage(${idx}, ${property.id})"></div>`
+                        ).join('')}
+                    </div>` : ''}
+                </div>
+                <div class="space-y-2 mb-6">
+                    <p class="text-gray-600 text-sm md:text-base">${property.address}</p>
+                    <p class="text-gray-700 text-sm md:text-base">${property.description}</p>
+                    <p class="text-gray-700 text-sm md:text-base"><strong>Luxury Status:</strong> ${property.luxury_status}</p>
+                </div>
+                
+                <div class="configurations-section">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Available Configurations</h3>
+                    <div class="configurations-grid">
+                        ${configurationsHTML}
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <span class="block text-xs md:text-sm text-gray-600 mb-2">Amenities</span>
+                    <div class="flex flex-wrap gap-2">${amenities}</div>
+                </div>
+                <div class="flex gap-3 md:gap-4">
+                    <button onclick="showContact()" class="flex-1 py-2 md:py-3 bg-gray-800 text-white rounded-lg text-sm md:text-base font-medium hover:bg-gray-700">Contact Agent</button>
+                    <button onclick="downloadBrochure('${property.brochure}')" class="flex-1 py-2 md:py-3 bg-gray-200 text-gray-800 rounded-lg text-sm md:text-base font-medium hover:bg-gray-300">Download Brochure</button>
+                </div>
+                <div id="contactDisplay" class="contact-display">
+                    <div class="contact-info">
+                        <span>Contact: ${property.contact}</span>
+                        <a href="${whatsappLink}" target="_blank" class="whatsapp-button">
+                            <svg class="whatsapp-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.516"/>
+                            </svg>
+                            Message on WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function showPropertyModal(property) {
+        console.log('Showing modal for property:', property.id);
+        currentImageIndex = 0;
+        const modalContent = document.getElementById('modalContent');
+        modalContent.parentElement.dataset.propertyId = property.id;
+        modalContent.innerHTML = createModalHTML(property);
+        document.getElementById('propertyModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        console.log('Closing modal');
+        const modal = document.getElementById('propertyModal');
+        if (modal) {
+            modal.style.display = 'none';
+        } else {
+            console.error('Modal element not found');
+        }
+    }
+
+    function changeImage(delta, propertyId) {
+        console.log('Changing image:', { delta, propertyId, currentImageIndex });
+        const property = filteredProperties.find(p => p.id === parseInt(propertyId));
+        if (!property) {
+            console.error('Property not found:', propertyId);
+            return;
+        }
+        const images = Array.isArray(property.images) && property.images.length > 0 
+            ? property.images 
+            : [property.thumbnail || 'https://via.placeholder.com/200'];
+        currentImageIndex = (currentImageIndex + delta + images.length) % images.length;
+        const galleryImage = document.getElementById('galleryImage');
+        if (galleryImage) {
+            galleryImage.src = images[currentImageIndex];
+            updateGalleryIndicators();
+        } else {
+            console.error('Gallery image element not found');
+        }
+    }
+
+    function setImage(index, propertyId) {
+        console.log('Setting image:', { index, propertyId });
+        const property = filteredProperties.find(p => p.id === parseInt(propertyId));
+        if (!property) {
+            console.error('Property not found:', propertyId);
+            return;
+        }
+        const images = Array.isArray(property.images) && property.images.length > 0 
+            ? property.images 
+            : [property.thumbnail || 'https://via.placeholder.com/200'];
+        currentImageIndex = Math.max(0, Math.min(index, images.length - 1));
+        const galleryImage = document.getElementById('galleryImage');
+        if (galleryImage) {
+            galleryImage.src = images[currentImageIndex];
+            updateGalleryIndicators();
+        } else {
+            console.error('Gallery image element not found');
+        }
+    }
+
+    function updateGalleryIndicators() {
+        const indicators = document.querySelectorAll('.gallery-indicator');
+        indicators.forEach((indicator, idx) => {
+            indicator.classList.toggle('active', idx === currentImageIndex);
+        });
+    }
+
+    function showContact() {
+        const contactDisplay = document.getElementById('contactDisplay');
+        if (contactDisplay) {
+            contactDisplay.classList.add('active');
+        }
+    }
+
+    function downloadBrochure(url) {
+        if (url) {
+            window.location.href = url;
+        } else {
+            alert('No brochure available for this property.');
+        }
+    }
+
+    function handleSearch() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        filteredProperties = properties.filter(p => 
+            p.name.toLowerCase().includes(term) || 
+            p.address.toLowerCase().includes(term)
+        );
+        updateMap();
+        updatePropertyCount();
+    }
+
+    function updatePropertyCount() {
+        const propertyCount = document.getElementById('propertyCount');
+        if (propertyCount) {
+            propertyCount.textContent = `📊 ${filteredProperties.length} Properties`;
+        }
+    }
+
+    function resetMap() {
+        map.setView([6.5244, 3.3792], 12);
+    }
+
+    function refreshData() {
+        fetchProperties();
+    }
+
+    function toggleFilters() {
+        const sidebar = document.getElementById('filterSidebar');
+        if (sidebar) {
+            sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    function updateRangeDisplay(type) {
+        const minField = document.getElementById(`min${type}`);
+        const maxField = document.getElementById(`max${type}`);
+        const display = document.getElementById(`${type.toLowerCase()}RangeDisplay`);
+        
+        const minVal = parseInt(minField.value) || null;
+        const maxVal = parseInt(maxField.value) || null;
+        
+        let displayText = `Any number of ${type.toLowerCase()}`;
+        
+        if (minVal && maxVal) {
+            displayText = `${minVal} - ${maxVal} ${type.toLowerCase()}`;
+        } else if (minVal) {
+            displayText = `${minVal}+ ${type.toLowerCase()}`;
+        } else if (maxVal) {
+            displayText = `Up to ${maxVal} ${type.toLowerCase()}`;
+        }
+        
+        display.textContent = displayText;
+    }
+
+    function applyFilters() {
+        const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
+        const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+        const minBedrooms = parseInt(document.getElementById('minBedrooms').value) || null;
+        const maxBedrooms = parseInt(document.getElementById('maxBedrooms').value) || null;
+        const minBathrooms = parseInt(document.getElementById('minBathrooms').value) || null;
+        const maxBathrooms = parseInt(document.getElementById('maxBathrooms').value) || null;
+
+        filteredProperties = properties.filter(p => 
+            p.configurations.some(c => {
+                const price = c.price === 'TBD' ? Infinity : parseFloat(c.price.replace(/[₦,]/g, '')) || 0;
+                const matchesPrice = price >= minPrice && price <= maxPrice;
+                
+                let matchesBedrooms = true;
+                if (minBedrooms !== null) {
+                    matchesBedrooms = matchesBedrooms && c.bedrooms >= minBedrooms;
+                }
+                if (maxBedrooms !== null) {
+                    matchesBedrooms = matchesBedrooms && c.bedrooms <= maxBedrooms;
+                }
+                
+                let matchesBathrooms = true;
+                if (minBathrooms !== null) {
+                    matchesBathrooms = matchesBathrooms && c.bathrooms >= minBathrooms;
+                }
+                if (maxBathrooms !== null) {
+                    matchesBathrooms = matchesBathrooms && c.bathrooms <= maxBathrooms;
+                }
+                
+                return matchesPrice && matchesBedrooms && matchesBathrooms;
+            })
+        );
+
+        updateMap();
+        updatePropertyCount();
+        
+        // Update display texts
+        document.getElementById('priceRangeDisplay').textContent = 
+            `₦${minPrice.toLocaleString()} – ${maxPrice === Infinity ? 'No Max' : '₦' + maxPrice.toLocaleString()}`;
+        updateRangeDisplay('Bedrooms');
+        updateRangeDisplay('Bathrooms');
+    }
+
+    function clearFilters() {
+        document.getElementById('minPrice').value = '';
+        document.getElementById('maxPrice').value = '';
+        document.getElementById('minBedrooms').value = '';
+        document.getElementById('maxBedrooms').value = '';
+        document.getElementById('minBathrooms').value = '';
+        document.getElementById('maxBathrooms').value = '';
+        
+        filteredProperties = properties;
+        updateMap();
+        updatePropertyCount();
+        
+        document.getElementById('priceRangeDisplay').textContent = '₦0 – No Max';
+        document.getElementById('bedroomsRangeDisplay').textContent = 'Any number of bedrooms';
+        document.getElementById('bathroomsRangeDisplay').textContent = 'Any number of bathrooms';
+    }
+
+    // Draggable Search Box
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    const searchBox = document.getElementById('searchBox');
+
+    function handleDragStart(e) {
+        if (e.target.closest('input')) return;
+        e.preventDefault();
+        isDragging = true;
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        dragOffset = {
+            x: clientX - parseInt(searchBox.style.left || 0),
+            y: clientY - parseInt(searchBox.style.top || 0)
+        };
+    }
+
+    function handleDragMove(e) {
+        if (!isDragging) return;
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        searchBox.style.left = Math.max(0, Math.min(window.innerWidth - 320, clientX - dragOffset.x)) + 'px';
+        searchBox.style.top = Math.max(0, Math.min(window.innerHeight - 50, clientY - dragOffset.y)) + 'px';
+    }
+
+    function handleDragEnd() {
+        isDragging = false;
+    }
+
+    searchBox.addEventListener('mousedown', handleDragStart);
+    searchBox.addEventListener('touchstart', handleDragStart);
+    document.addEventListener('mousemove', handleDragMove);
+    document.addEventListener('touchmove', handleDragMove, { passive: false });
+    document.addEventListener('mouseup', handleDragEnd);
+    document.addEventListener('touchend', handleDragEnd);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+        fetchProperties();
+        document.getElementById('searchInput').addEventListener('input', handleSearch);
+        searchBox.style.left = (window.innerWidth / 2 - (window.innerWidth < 768 ? window.innerWidth / 2 - 10 : 150)) + 'px';
+        searchBox.style.top = '10px';
+        
+        const closeButton = document.getElementById('modalCloseButton');
+        if (closeButton) {
+            closeButton.addEventListener('click', closeModal);
+        }
+    });
+</script>
+{% endblock %}
