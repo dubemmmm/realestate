@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Properties - Link Expired</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .shared-banner {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        }
+        .whatsapp-button {
+            background: #128C7E;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+        .whatsapp-button:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+        .expired-container {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        @media (max-width: 768px) {
+            .expired-container {
+                margin: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Banner -->
+    <div class="shared-banner text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-share-alt text-2xl"></i>
+                <h1 class="text-2xl font-bold">Shared Properties - Link Not Valid</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expired Message -->
+    <div class="container mx-auto px-4 py-12">
+        <div class="expired-container max-w-2xl mx-auto p-8 text-center">
+            <i class="fas fa-exclamation-triangle text-red-500 text-6xl mb-6"></i>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">This Shared Link is not valid</h2>
+            <p class="text-gray-600 mb-6">
+                The link you are trying to access is has expired or has been made inactive . Please reach out to our representatives to obtain a new shared properties link.
+            </p>
+            <a 
+                href="https://wa.me/2349129081066?text=Hi! The shared properties link I was given has expired. Could you provide a new one?"
+                class="whatsapp-button"
+                target="_blank"
+            >
+                <i class="fab fa-whatsapp text-xl"></i>
+                Contact Our Representatives
+            </a>
+        </div>
+    </div>
+</body>
+</html>

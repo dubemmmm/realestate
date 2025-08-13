@@ -1,5 +1,9 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
+from django.utils.crypto import get_random_string
+from django.utils import timezone
+from datetime import timedelta
 import uuid
 import os
 
@@ -127,3 +131,47 @@ class PropertyAmenity(models.Model):
 
     def __str__(self):
         return f"{self.property.name} - {self.name}"
+    
+class SharedPropertyList(models.Model):
+    """Model for sharing selected properties with temporary links"""
+    name = models.CharField(max_length=200, help_text="Name for this shared list")
+    token = models.CharField(max_length=50, unique=True, blank=True)
+    properties = models.ManyToManyField(Property, related_name='shared_lists')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shared_lists')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    view_count = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = get_random_string(32)
+        super().save(*args, **kwargs)
+    
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+    
+    def is_valid(self):
+        return self.is_active and not self.is_expired()
+    
+    def __str__(self):
+        return f"{self.name} - {self.token[:8]}..."
+
+class UserProfile(models.Model):
+    """Extended user profile for employee management"""
+    ROLE_CHOICES = (
+        ('admin', 'Administrator'),
+        ('agent', 'Real Estate Agent'),
+    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='viewer')
+    phone = models.CharField(max_length=20, blank=True)
+    is_employee = models.BooleanField(default=False)
+    can_share_properties = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - {self.get_role_display()}"
