@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMP_DIR = os.path.join(BASE_DIR, "templates")
@@ -20,12 +21,13 @@ TEMP_DIR = os.path.join(BASE_DIR, "templates")
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
+SECRET_KEY = config('SECRET_KEY')
+#SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -137,3 +139,35 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'landing'
 LOGOUT_REDIRECT_URL = 'landing'
 LOGIN_URL = 'login'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'airtable-cache',
+    }
+}
+# PDF Generation Settings
+PDF_SETTINGS = {
+    'MAX_IMAGE_WIDTH': 400,
+    'MAX_IMAGE_HEIGHT': 300,
+    'IMAGE_QUALITY': 85,
+    'REQUEST_TIMEOUT': 10,  # seconds for downloading remote images
+}
+
+# Security settings for file downloads
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None  # Allow PDF downloads
+SECURE_REFERRER_POLICY = "same-origin"
+
+# Content Security Policy (if using django-csp)
+CSP_DEFAULT_SRC = ["'self'"]
+CSP_SCRIPT_SRC = ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"]
+CSP_STYLE_SRC = ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"]
+CSP_IMG_SRC = ["'self'", "data:", "blob:"]
+CSP_FONT_SRC = ["'self'", "https://cdnjs.cloudflare.com"]
+
+# Allowed hosts (ensure your domain is included)
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']  # Add your actual domain
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB

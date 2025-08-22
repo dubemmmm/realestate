@@ -397,6 +397,8 @@
         .filter-sidebar {
             width: 100%;
             max-width: 320px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
     }
     @media (max-width: 768px) {
@@ -567,6 +569,17 @@
                 </div>
                 <div class="range-display" id="bathroomsRangeDisplay">Any number of bathrooms</div>
             </div>
+            <!-- Completion Date Filter -->
+                <div class="mb-6">
+                    <label class="filter-label">Completion Date</label>
+                    <input 
+                        type="date" 
+                        name="completion_date" 
+                        {% comment %} value="{{ filters.completion_date }}" {% endcomment %}
+                        class="filter-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                    >
+                </div>
+
             <div class="filter-section">
                 <label class="filter-label">Luxury Status</label>
                 <select id="luxuryStatus" class="filter-input">
@@ -782,13 +795,14 @@
                     </div>` : ''}
                 </div>
                 <div class="space-y-2 mb-6">
-                    <p class="text-gray-600 text-sm md:text-base flex items-center"><i class="fas fa-map-marker-alt mr-2 text-blue-500"></i>${property.address}</p>
-                    <p class="text-gray-700 text-sm md:text-base">${property.description}</p>
+                    <p class="text-gray-600 text-sm md:text-base flex items-center"><i class="fas fa-map-marker-alt mr-2 text-blue-500"></i><strong>Address:</strong> ${property.address}</p>
+                    <p class="text-gray-700 text-sm md:text-base"><strong>Description:</strong>${property.description}</p>
                     <p class="text-gray-700 text-sm md:text-base"><strong>Luxury Status:</strong> ${property.luxury_status}</p>
+                    <p class="text-gray-700 text-sm md:text-base"><strong>Completion Date:</strong> ${property.completion_date}</p>
                 </div>
                 
                 <div class="configurations-section">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Available Configurations</h3>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Available Types</h3>
                     <div class="configurations-grid">
                         ${configurationsHTML}
                     </div>
@@ -993,6 +1007,12 @@
         const minBathrooms = parseInt(document.getElementById('minBathrooms').value) || null;
         const maxBathrooms = parseInt(document.getElementById('maxBathrooms').value) || null;
         const luxuryStatus = document.getElementById('luxuryStatus').value;
+        // ✅ Get selected completion date (YYYY-MM-DD)
+        const completionDateInputEl = document.querySelector('input[name="completion_date"]');
+        const completionDateSelectedStr = completionDateInputEl && completionDateInputEl.value ? completionDateInputEl.value : null;
+        const completionDateSelected = completionDateSelectedStr ? new Date(completionDateSelectedStr) : null;
+        console.log(completionDateSelected)
+        if (completionDateSelected) completionDateSelected.setHours(0, 0, 0, 0);
 
         // Convert input prices to NGN (base currency) for filtering
         const minPriceNGN = currencyConverter.currentCurrency === 'USD'
@@ -1003,35 +1023,43 @@
             : maxPriceInput;
 
         filteredProperties = properties.filter(p => {
+            // ✅ Completion date check (only if user selected a date)
+        let matchesCompletionDate = true;
+            if (completionDateSelected) {
+                if (!p.completion_date) {
+                    matchesCompletionDate = false; // no date -> exclude when filter is active
+                } else {
+                    const propDate = new Date(p.completion_date);
+                    if (isNaN(propDate.getTime())) {
+                        matchesCompletionDate = false; // invalid date -> exclude when filter is active
+                    } else {
+                        propDate.setHours(0, 0, 0, 0);
+                        matchesCompletionDate = propDate.getTime() <= completionDateSelected.getTime();
+                    }
+                }
+            }
             let matchesLuxury = true;
             if (luxuryStatus !== 'all') {
                 matchesLuxury = p.luxury_status && p.luxury_status.toLowerCase() === luxuryStatus.toLowerCase();
             }
 
-            return matchesLuxury && p.configurations.some(c => {
-                const price = c.price === 'TBD' ? Infinity : parseFloat(c.price.replace(/[₦,]/g, '')) || 0;
-                const matchesPrice = price >= minPriceNGN && price <= maxPriceNGN;
-                
-                let matchesBedrooms = true;
-                if (minBedrooms !== null) {
-                    matchesBedrooms = c.bedrooms >= minBedrooms;
-                }
-                if (maxBedrooms !== null) {
-                    matchesBedrooms = matchesBedrooms && c.bedrooms <= maxBedrooms;
-                }
-                
-                let matchesBathrooms = true;
-                if (minBathrooms !== null) {
-                    matchesBathrooms = c.bathrooms >= minBathrooms;
-                }
-                if (maxBathrooms !== null) {
-                    matchesBathrooms = matchesBathrooms && c.bathrooms <= maxBathrooms;
-                }
-                
-                return matchesPrice && matchesBedrooms && matchesBathrooms;
-            });
+            const matchesConfig = p.configurations.some(c => {
+            const price = c.price === 'TBD' ? Infinity : parseFloat(c.price.replace(/[₦,]/g, '')) || 0;
+            const matchesPrice = price >= minPriceNGN && price <= maxPriceNGN;
+
+            let matchesBedrooms = true;
+            if (minBedrooms !== null) matchesBedrooms = c.bedrooms >= minBedrooms;
+            if (maxBedrooms !== null) matchesBedrooms = matchesBedrooms && c.bedrooms <= maxBedrooms;
+
+            let matchesBathrooms = true;
+            if (minBathrooms !== null) matchesBathrooms = c.bathrooms >= minBathrooms;
+            if (maxBathrooms !== null) matchesBathrooms = matchesBathrooms && c.bathrooms <= maxBathrooms;
+
+            return matchesPrice && matchesBedrooms && matchesBathrooms;
         });
 
+        return matchesCompletionDate && matchesLuxury && matchesConfig;
+    });
         updateMap();
         updatePropertyCount();
         
@@ -1051,6 +1079,8 @@
         document.getElementById('maxBathrooms').value = '';
         document.getElementById('luxuryStatus').value = 'all';
         document.getElementById('searchInputSidebar').value = '';
+        const completionDateInputEl = document.querySelector('input[name="completion_date"]');
+        if (completionDateInputEl) completionDateInputEl.value = '';
         
         filteredProperties = properties;
         updateMap();

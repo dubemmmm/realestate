@@ -138,6 +138,27 @@
             box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
             color: white;
         }
+        .pdf-button {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+        .pdf-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            color: white;
+        }
         .filter-input {
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.2);
@@ -329,6 +350,35 @@
             font-weight: 600;
             border: 1px solid #93c5fd;
         }
+        /* Updated Header Actions Styling */
+        .header-actions {
+            display: flex;
+            flex-wrap: nowrap; /* Prevent wrapping on desktop/laptop */
+            align-items: center;
+            gap: 8px; /* Reduced gap for tighter spacing */
+            justify-content: flex-end; /* Align to the right */
+        }
+        .header-actions > * {
+            flex-shrink: 0; /* Prevent buttons from shrinking */
+            min-width: 0; /* Allow text truncation if needed */
+        }
+        /* Ensure buttons are compact and aligned */
+        .header-actions .btn-primary,
+        .header-actions .currency-toggle,
+        .header-actions a,
+        .header-actions button {
+            padding: 8px 12px; /* Consistent padding for all buttons */
+            font-size: 14px; /* Slightly smaller font for better fit */
+            border-radius: 12px; /* Consistent border radius */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        /* Specific adjustments for Sync Airtable button */
+        .header-actions #syncAirtableBtn {
+            padding: 8px 12px; /* Match other buttons */
+        }
         /* Mobile Styles */
         @media (max-width: 1024px) {
             .filter-sidebar {
@@ -339,6 +389,8 @@
                 z-index: 50;
                 transform: translateX(-100%);
                 width: 320px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
             .filter-sidebar.open {
                 transform: translateX(0);
@@ -350,6 +402,12 @@
             .main-content {
                 width: 100%;
                 margin-left: 0;
+            }
+            /* Adjust header-actions for laptop screens */
+            .header-actions {
+                flex-wrap: wrap; /* Allow wrapping on smaller laptop screens */
+                gap: 6px; /* Slightly smaller gap */
+                justify-content: flex-end;
             }
         }
         @media (max-width: 768px) {
@@ -363,9 +421,9 @@
                 text-align: center;
             }
             .header-actions {
-                flex-wrap: wrap;
+                flex-wrap: wrap; /* Allow wrapping for mobile */
                 justify-content: center;
-                gap: 10px;
+                gap: 8px;
             }
             .modal-content {
                 max-width: 95vw;
@@ -390,6 +448,9 @@
             }
             .modal-image-container {
                 max-height: 30vh;
+            }
+            .header-actions {
+                gap: 6px; /* Tighter gap for very small screens */
             }
         }
     </style>
@@ -418,35 +479,44 @@
                         <span id="currentCurrency">₦ NGN</span>
                     </button>
                     {% if is_employee %}
-                        <a href="{% url 'dashboard' %}" class="btn-primary text-white px-4 py-2 rounded-lg no-underline font-semibold hidden sm:flex items-center gap-2">
+                        <a href="{% url 'dashboard' %}" class="btn-primary text-white rounded-lg no-underline font-semibold flex items-center gap-2">
                             <i class="fas fa-map-marked-alt"></i>
                             <span class="hidden md:inline">Map View</span>
                         </a>
-                        <a href="{% url 'manage_shared_lists' %}" class="text-gray-300 hover:text-white transition-colors hidden sm:flex items-center gap-1">
+                        <a href="{% url 'manage_shared_lists' %}" class="text-gray-300 hover:text-white transition-colors flex items-center gap-1">
                             <i class="fas fa-share-alt"></i>
                             <span class="hidden md:inline ml-1">Manage Shares</span>
                         </a>
+                        <!-- Sync Button (Visible to Employees Only) -->
+                        {% if can_sync_airtable %}
+                            <button id="syncAirtableBtn" class="btn-primary text-white rounded font-semibold flex items-center gap-2">
+                                <i class="fas fa-sync"></i>
+                                <span class="hidden md:inline">Sync with Airtable</span>
+                            </button>
+                            <span id="syncStatus" class="ml-2 text-gray-300 text-sm hidden md:block"></span>
+                        {% endif %}
                     {% endif %}
                     {% if user.is_authenticated %}
-                        <div class="flex items-center gap-2 lg:gap-4">
-                            <span class="text-gray-300 text-sm hidden sm:block">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-300 text-sm hidden md:block">
                                 Hello, {{ user.get_full_name|default:user.username }}
                             </span>
                             <form method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}
-                                <button type="submit" class="text-gray-300 hover:text-white transition-colors">
-                                    <i class="fas fa-sign-out-alt mr-1"></i>
-                                    <span class="hidden sm:inline">Log Out</span>
+                                <button type="submit" class="text-gray-300 hover:text-white transition-colors flex items-center gap-1">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span class="hidden md:inline">Log Out</span>
                                 </button>
                             </form>
                         </div>
                     {% else %}
-                        <div class="flex items-center gap-2 lg:gap-4">
-                            <a href="{% url 'login' %}" class="text-gray-300 hover:text-white transition-colors">
-                                <i class="fas fa-sign-in-alt mr-1"></i>
-                                <span class="hidden sm:inline">Login</span>
+                        <div class="flex items-center gap-2">
+                            <a href="{% url 'login' %}" class="text-gray-300 hover:text-white transition-colors flex items-center gap-1">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span class="hidden md:inline">Login</span>
                             </a>
-                            <a href="{% url 'register' %}" class="btn-primary text-white px-4 py-2 rounded-lg no-underline font-semibold">
+                            <a href="{% url 'register' %}" class="btn-primary text-white rounded-lg no-underline font-semibold flex items-center gap-2">
+                                <i class="fas fa-user-plus"></i>
                                 Register
                             </a>
                         </div>
@@ -575,6 +645,16 @@
                         </div>
                     </div>
                 </div>
+                <!-- Completion Date Filter -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-3">Completion Date</label>
+                    <input 
+                        type="date" 
+                        name="completion_date" 
+                        value="{{ filters.completion_date }}"
+                        class="filter-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                    >
+                </div>
                 <!-- Luxury Status -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium mb-3">Luxury Status</label>
@@ -624,7 +704,14 @@
                             class="btn-primary w-full text-white py-3 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                             disabled
                         >
-                            <i class="fas fa-link mr-2"></i>Create Share (<span id="selectedCount">0</span>)
+                            <i class="fas fa-link mr-2"></i>Create Share (<span class="selected-count" id="selectedCount">0</span>)
+                        </button>
+                        <button 
+                            id="compareSelectedBtn" 
+                            class="btn-primary w-full text-white py-3 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                            disabled
+                        >
+                            <i class="fas fa-balance-scale mr-2"></i>Compare (<span class="selected-count">0</span>)
                         </button>
                     </div>
                 </div>
@@ -760,14 +847,14 @@
                                 >
                                     <i class="fas fa-eye mr-2"></i>View Details
                                 </button>
-                                <a 
-                                    href="https://wa.me/{{ property.contact_phone|default:'2348000000000' }}?text=Hi! I'm interested in {{ property.name }}"
-                                    class="whatsapp-button"
-                                    target="_blank"
+                                <button 
+                                    onclick="downloadPropertyPDF({{ property.id }})"
+                                    class="pdf-button flex-shrink-0"
+                                    title="Download Property Details PDF"
                                 >
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp
-                                </a>
+                                    <i class="fas fa-file-pdf"></i>
+                                    Download PDF
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -816,6 +903,29 @@
             </div>
             <div id="shareModalContent">
                 <!-- Share modal content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Modal -->
+    <div id="comparisonModal" class="modal-overlay fixed inset-0 hidden z-50">
+        <div class="modal-content max-w-6xl w-full max-h-[90vh] overflow-hidden">
+            <div class="modal-header">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Property Comparison</span>
+                </h2>
+                <button onclick="closeComparisonModal()" class="modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body overflow-y-auto max-h-[calc(90vh-120px)]" id="comparisonContent">
+                <!-- Comparison content will be loaded here -->
+            </div>
+            <div class="sticky bottom-0 bg-white border-t p-4 flex justify-end gap-4">
+                <a id="downloadComparisonPdf" href="#" class="btn-primary text-white px-6 py-2 rounded-lg font-semibold no-underline">
+                    <i class="fas fa-download mr-2"></i>Download PDF
+                </a>
             </div>
         </div>
     </div>
@@ -1070,21 +1180,27 @@
         // Property selection for sharing
         const propertyCheckboxes = document.querySelectorAll('.property-checkbox');
         const createShareBtn = document.getElementById('createShareBtn');
-        const selectedCount = document.getElementById('selectedCount');
+        const compareSelectedBtn = document.getElementById('compareSelectedBtn');
         const shareListName = document.getElementById('shareListName');
         const shareDuration = document.getElementById('shareDuration');
-        function updateShareButton() {
+        const syncAirtableBtn = document.getElementById('syncAirtableBtn');
+        function updateSelectionButtons() {
             const selectedProperties = Array.from(propertyCheckboxes)
                 .filter(checkbox => checkbox.checked)
                 .map(checkbox => checkbox.value);
             const count = selectedProperties.length;
-            selectedCount.textContent = count;
+            document.querySelectorAll('.selected-count').forEach(span => {
+                span.textContent = count;
+            });
             createShareBtn.disabled = count === 0 || !shareListName.value.trim();
+            if (compareSelectedBtn) {
+                compareSelectedBtn.disabled = count < 2;
+            }
         }
         propertyCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', updateShareButton);
+            checkbox.addEventListener('change', updateSelectionButtons);
         });
-        shareListName.addEventListener('input', updateShareButton);
+        shareListName.addEventListener('input', updateSelectionButtons);
 
         // Enhanced Property modal functionality with currency support
         let currentModalImageIndex = 0;
@@ -1155,6 +1271,7 @@
                                     <div class="modal-info-label">Address</div>
                                     <div class="modal-info-value">${property.address || 'Not specified'}</div>
                                 </div>
+                                
                                 <div class="modal-info-item">
                                     <div class="modal-info-label">Luxury Status</div>
                                     <div class="modal-info-value">
@@ -1164,8 +1281,13 @@
                                         }
                                     </div>
                                 </div>
+                                <div class="modal-info-item">
+                                    <div class="modal-info-label">Completion Date</div>
+                                    <div class="modal-info-value">${property.completion_date || 'Not specified'}</div>
+                                </div>
                             </div>
                         </div>
+                        
                         <!-- Description -->
                         ${property.description ? `
                             <div class="modal-section">
@@ -1373,7 +1495,7 @@
                 // Reset selection
                 propertyCheckboxes.forEach(checkbox => checkbox.checked = false);
                 shareListName.value = '';
-                updateShareButton();
+                updateSelectionButtons();
             } catch (error) {
                 console.error('Error creating share link:', error);
                 alert('Error creating share link. Please try again.');
@@ -1390,6 +1512,177 @@
             shareModal.classList.add('hidden');
             document.body.style.overflow = '';
         }
+        // Sync Airtable functionality
+        if (syncAirtableBtn) {
+            syncAirtableBtn.addEventListener('click', async () => {
+                syncStatus.textContent = 'Syncing with Airtable...';
+                syncAirtableBtn.disabled = true;
+                try {
+                    const response = await fetch('{% url "sync_airtable" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({})
+                    });
+                    const result = await response.json();
+                    console.log('Sync Response:', result);
+                    if (result.success) {
+                        syncStatus.textContent = 'Sync completed successfully! Reloading page...';
+                        setTimeout(() => {
+                            window.location.reload(); // Refresh to show new properties
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || 'Sync failed');
+                    }
+                } catch (error) {
+                    console.error('Error syncing Airtable:', error);
+                    syncStatus.textContent = `Error: ${error.message}`;
+                    syncAirtableBtn.disabled = false;
+                }
+            });
+        }
+        // PDF download functionality
+        async function downloadPropertyPDF(propertyId) {
+            try {
+                const response = await fetch(`{% url 'property_pdf' property_id=0 %}`.replace('0', propertyId));
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate PDF');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `property-${propertyId}-details.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                alert('Error downloading PDF: ' + error.message);
+            }
+        }
+        // Comparison functionality
+        if (compareSelectedBtn) {
+            compareSelectedBtn.addEventListener('click', compareSelected);
+        }
+        async function compareSelected() {
+            const selectedProperties = Array.from(propertyCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+            if (selectedProperties.length < 2) return;
+            const modal = document.getElementById('comparisonModal');
+            const content = document.getElementById('comparisonContent');
+            content.innerHTML = `
+                <div class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    <span class="ml-3 text-gray-600">Loading comparison...</span>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            try {
+                const response = await fetch('{% url "compare_properties" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ property_ids: selectedProperties })
+                });
+                if (!response.ok) throw new Error('Failed to fetch comparison data');
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error);
+                content.innerHTML = buildComparisonTable(data.properties);
+                const pdfLink = document.getElementById('downloadComparisonPdf');
+                pdfLink.href = data.comparison_url;
+            } catch (error) {
+                console.error('Error fetching comparison:', error);
+                content.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                            <h3 class="text-lg font-semibold text-red-800 mb-2">Error Loading Comparison</h3>
+                            <p class="text-red-600 mb-4">We couldn't load the comparison. Please try again.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        function buildComparisonTable(properties) {
+            let html = '<div class="overflow-x-auto"><table class="min-w-full border-collapse">';
+            // Headers
+            html += '<thead><tr class="bg-gray-100">';
+            html += '<th class="p-4 border text-left font-bold text-gray-800">Feature</th>';
+            properties.forEach(prop => {
+                html += `<th class="p-4 border text-center font-bold text-gray-800">${prop.name}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            // Features
+            const features = [
+                { key: 'address', label: 'Address', format: v => v || 'N/A' },
+                { key: 'luxury_status', label: 'Luxury Status', format: v => v === 'luxurious' ? '<span class="text-amber-600 font-semibold"><i class="fas fa-crown mr-1"></i>Luxurious</span>' : 'Non-Luxurious' },
+                { key: 'min_price', label: 'Min Price', format: v => {
+                    if (!v) return 'On Request';
+                    if (currencyConverter.currentCurrency === 'USD') {
+                        const usd = v / currencyConverter.exchangeRate;
+                        return `$${usd < 1000 ? usd.toLocaleString('en-US', {maximumFractionDigits: 0}) : (usd/1000).toFixed(1) + 'K'}`;
+                    } else {
+                        return `₦${v.toLocaleString()}`;
+                    }
+                }},
+                { key: 'description', label: 'Description', format: v => v || 'N/A' },
+                { key: 'contact_phone', label: 'Contact Phone', format: v => v || 'N/A' },
+                { key: 'amenities', label: 'Amenities', format: v => v.length > 0 ? v.join(', ') : 'None' },
+                { key: 'configurations', label: 'Configurations', format: v => v.map(c => {
+                    let price = c.price;
+                    if (price) {
+                        if (currencyConverter.currentCurrency === 'USD') {
+                            price = price / currencyConverter.exchangeRate;
+                            price = `$${price < 1000 ? price.toLocaleString('en-US', {maximumFractionDigits: 0}) : (price/1000).toFixed(1) + 'K'}`;
+                        } else {
+                            price = `₦${price.toLocaleString()}`;
+                        }
+                    } else {
+                        price = 'TBD';
+                    }
+                    return `${c.bedrooms} Bed, ${c.bathrooms} Bath - ${price}`;
+                }).join('<br>') || 'N/A' },
+                
+            ];
+            features.forEach(feature => {
+                html += `<tr class="hover:bg-gray-50"><td class="p-4 border font-semibold text-gray-700">${feature.label}</td>`;
+                properties.forEach(prop => {
+                    let value = prop[feature.key];
+                    value = feature.format(value);
+                    html += `<td class="p-4 border text-gray-600">${value}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            return html;
+        }
+        function closeComparisonModal() {
+            const modal = document.getElementById('comparisonModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        document.getElementById('comparisonModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeComparisonModal();
+            }
+        });
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('comparisonModal');
+            if (!modal.classList.contains('hidden') && e.key === 'Escape') {
+                closeComparisonModal();
+            }
+        });
     </script>
 </body>
 </html>

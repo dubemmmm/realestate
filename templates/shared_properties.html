@@ -156,6 +156,27 @@
             transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
         }
+        .pdf-button {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+        .pdf-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            color: white;
+        }
         .currency-toggle {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             border: none;
@@ -292,6 +313,8 @@
                 z-index: 50;
                 transform: translateX(-100%);
                 width: 320px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
             .filter-sidebar.open {
                 transform: translateX(0);
@@ -371,10 +394,7 @@
                         <span id="currentCurrency">₦ NGN</span>
                     </button>
                     <div>
-                        <div class="countdown-timer mb-2" id="countdownTimer">
-                            <i class="fas fa-clock mr-2"></i>
-                            <span id="timeRemaining">Loading...</span>
-                        </div>
+                        
                         <p class="text-gray-300 text-sm">
                             Expires: {{ shared_list.expires_at|date:"M d, Y H:i" }}
                         </p>
@@ -514,6 +534,16 @@
                         </div>
                     </div>
                 </div>
+                <!-- Completion Date Filter -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-3">Completion Date</label>
+                    <input 
+                        type="date" 
+                        name="completion_date" 
+                        value="{{ filters.completion_date }}"
+                        class="filter-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                    >
+                </div>
                 <!-- Luxury Status -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium mb-3">Luxury Status</label>
@@ -560,10 +590,7 @@
 
         <!-- Main Content -->
         <div class="flex-1 p-4 lg:p-8 main-content">
-            <div class="mb-8">
-                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-2">Shared Properties</h2>
-                <p class="text-gray-600">{{ properties|length }} propert{{ properties|length|pluralize:"y,ies" }} found</p>
-            </div>
+            
             <!-- Properties Grid -->
             <div class="property-grid">
                 {% for property in properties %}
@@ -664,14 +691,14 @@
                                 >
                                     <i class="fas fa-eye mr-2"></i>View Details
                                 </button>
-                                <a 
-                                    href="https://wa.me/{{ property.contact_phone|default:'2348000000000' }}?text=Hi! I'm interested in {{ property.name }} from the shared property list: {{ shared_list.name }}"
-                                    class="whatsapp-button"
-                                    target="_blank"
+                                <button 
+                                    onclick="downloadPropertyPDF({{ property.id }})"
+                                    class="pdf-button flex-shrink-0"
+                                    title="Download Property Details PDF"
                                 >
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp
-                                </a>
+                                    <i class="fas fa-file-pdf"></i>
+                                    Download PDF
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -716,12 +743,7 @@
             const now = new Date();
             const diff = expiresAt - now;
 
-            if (diff <= 0) {
-                document.getElementById('timeRemaining').textContent = 'Expired';
-                document.getElementById('countdownTimer').classList.remove('countdown-timer');
-                document.getElementById('countdownTimer').classList.add('bg-red-600');
-                return;
-            }
+            
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -736,7 +758,6 @@
                 timeText = `${minutes}m`;
             }
 
-            document.getElementById('timeRemaining').textContent = timeText;
         }
 
         updateCountdown();
@@ -1151,6 +1172,10 @@
                                         }
                                     </div>
                                 </div>
+                                <div class="bg-gray-50 p-4 rounded-12 border-l-4 border-blue-600">
+                                    <div class="text-sm font-semibold text-gray-600 uppercase">Completion Date</div>
+                                    <div class="text-gray-800">${property.completion_date || 'Not specified'}</div>
+                                </div>
                             </div>
                         </div>
                         <!-- Description -->
@@ -1269,6 +1294,30 @@
                         </div>
                     </div>
                 `;
+            }
+        }
+        // PDF download functionality
+        async function downloadPropertyPDF(propertyId) {
+            try {
+                const response = await fetch(`{% url 'property_pdf' property_id=0 %}`.replace('0', propertyId));
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate PDF');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `property-${propertyId}-details.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                alert('Error downloading PDF: ' + error.message);
             }
         }
         
