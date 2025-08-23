@@ -24,7 +24,8 @@ TEMP_DIR = os.path.join(BASE_DIR, "templates")
 SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["realestate-3nrg6.ondigitalocean.app", "localhost", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["https://realestate-3nrg6.ondigitalocean.app"]
 
 DEBUG = True  # Make sure this is False for production
 
