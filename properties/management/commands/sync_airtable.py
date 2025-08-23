@@ -102,6 +102,7 @@ class Command(BaseCommand):
         tbl_cfgs = config("AIRTABLE_TBL_CONFIGURATIONS", "Property Configurations")
         tbl_imgs = config("AIRTABLE_TBL_IMAGES", "Property Images")
         tbl_amen = config("AIRTABLE_TBL_AMENITIES", "Property Amenities")
+        print('airtable is ', tbl_amen)
 
         print(f"Token: {'*' * (len(token) - 4) + token[-4:] if token else 'NOT SET'}")
         print(f"Base ID: {base_id}")

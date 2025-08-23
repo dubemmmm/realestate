@@ -11,22 +11,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-import os, logging
-# Build from env if present; ignore empty values. Fallback to safe defaults for DO.
-_raw_hosts = os.getenv(
-    "ALLOWED_HOSTS",
-    "realestate-3nrg6.ondigitalocean.app,.ondigitalocean.app,localhost,127.0.0.1",
-)
-ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(",") if h.strip()]
-
-# Good to have for POSTs
-CSRF_TRUSTED_ORIGINS = [
-    "https://realestate-3nrg6.ondigitalocean.app",
-]
-
-# TEMP debug to confirm final values actually in use:
-logging.warning("FINAL ALLOWED_HOSTS=%r (from %r)", ALLOWED_HOSTS, _raw_hosts)
-import dj_database_url
+import os
+from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMP_DIR = os.path.join(BASE_DIR, "templates")
@@ -35,8 +21,8 @@ TEMP_DIR = os.path.join(BASE_DIR, "templates")
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+#SECRET_KEY = config('SECRET_KEY')
 SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
-
 
 ALLOWED_HOSTS = ["realestate-3nrg6.ondigitalocean.app", "localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = ["https://realestate-3nrg6.ondigitalocean.app"]
@@ -96,6 +82,10 @@ WSGI_APPLICATION = 'realestate.wsgi.application'
 
 # Database configuration
 DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
