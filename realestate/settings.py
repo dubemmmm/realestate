@@ -22,8 +22,8 @@ TEMP_DIR = os.path.join(BASE_DIR, "templates")
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
-#SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
+#SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
 
 
 ALLOWED_HOSTS = [
