@@ -11,15 +11,21 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-import os
-ALLOWED_HOSTS = [".ondigitalocean.app", "localhost", "127.0.0.1"]
+import os, logging
+# Build from env if present; ignore empty values. Fallback to safe defaults for DO.
+_raw_hosts = os.getenv(
+    "ALLOWED_HOSTS",
+    "realestate-3nrg6.ondigitalocean.app,.ondigitalocean.app,localhost,127.0.0.1",
+)
+ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(",") if h.strip()]
 
+# Good to have for POSTs
 CSRF_TRUSTED_ORIGINS = [
     "https://realestate-3nrg6.ondigitalocean.app",
 ]
-import logging
-logger = logging.getLogger(__name__)
-logger.warning("ALLOWED_HOSTS at startup: %r", ALLOWED_HOSTS)
+
+# TEMP debug to confirm final values actually in use:
+logging.warning("FINAL ALLOWED_HOSTS=%r (from %r)", ALLOWED_HOSTS, _raw_hosts)
 import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
