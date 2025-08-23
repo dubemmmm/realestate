@@ -27,7 +27,14 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["realestate-3nrg6.ondigitalocean.app"]
+# For production/deployment
+if os.environ.get('APP_PLATFORM'):
+    ALLOWED_HOSTS = ['*']  # App Platform handles this securely
+    DEBUG = False
+else:
+    # For local development
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+    DEBUG = True
 
 
 # Application definition
