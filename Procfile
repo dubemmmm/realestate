@@ -1,2 +1,3 @@
-web: gunicorn --config gunicorn.conf.py gettingstarted.wsgi
+web: gunicorn realestate.wsgi:application --log-file -
 release: ./manage.py migrate --no-input
+
