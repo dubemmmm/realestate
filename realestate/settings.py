@@ -24,11 +24,7 @@ TEMP_DIR = os.path.join(BASE_DIR, "templates")
 SECRET_KEY = config('SECRET_KEY')
 #SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
 
-# Debug: Print environment to logs
-print("=== ENVIRONMENT DEBUG ===")
-print(f"PORT: {os.environ.get('PORT')}")
-print(f"DATABASE_URL exists: {bool(os.environ.get('DATABASE_URL'))}")
-print("========================")
+
 ALLOWED_HOSTS = [
     '*',  # This allows all hosts - fine for App Platform
 ]
@@ -84,12 +80,23 @@ WSGI_APPLICATION = 'realestate.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database configuration
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
     }
-}
+    print("Using PostgreSQL from DATABASE_URL")
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    print("Using SQLite database")
+
+print(f"ALLOWED_HOSTS set to: {ALLOWED_HOSTS}")
+print(f"DEBUG set to: {DEBUG}")
 
 
 # Password validation
