@@ -6,7 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 import uuid
 import os
-
+import os
 def property_image_path(instance, filename):
     """Generate upload path for property images"""
     ext = filename.split('.')[-1]
