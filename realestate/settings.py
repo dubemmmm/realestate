@@ -25,9 +25,9 @@ SECRET_KEY = config('SECRET_KEY')
 #SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["https://realestate-3nrg6.ondigitalocean.app/"]
 
 
 # Application definition
