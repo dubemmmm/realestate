@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5
 
 
 ALLOWED_HOSTS = [
-    '*',  # This allows all hosts - fine for App Platform
+    'realestate-nq1a.onrender.com',  # This allows all hosts - fine for App Platform
 ]
 
 DEBUG = True  # Make sure this is False for production
