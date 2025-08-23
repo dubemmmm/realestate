@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["https://realestate-3nrg6.ondigitalocean.app/"]
+ALLOWED_HOSTS = ["realestate-3nrg6.ondigitalocean.app"]
 
 
 # Application definition
