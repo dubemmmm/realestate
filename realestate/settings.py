@@ -12,6 +12,17 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+ALLOWED_HOSTS = os.environ.get(
+    "ALLOWED_HOSTS",
+    "realestate-3nrg6.ondigitalocean.app,localhost,127.0.0.1"
+).split(",")
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://realestate-3nrg6.ondigitalocean.app",
+]
+import logging
+logger = logging.getLogger(__name__)
+logger.warning("ALLOWED_HOSTS at startup: %r", ALLOWED_HOSTS)
 import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
