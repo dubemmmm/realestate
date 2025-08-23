@@ -12,10 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "realestate-3nrg6.ondigitalocean.app,localhost,127.0.0.1"
-).split(",")
+ALLOWED_HOSTS = [".ondigitalocean.app", "localhost", "127.0.0.1"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://realestate-3nrg6.ondigitalocean.app",
