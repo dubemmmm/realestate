@@ -24,9 +24,11 @@ TEMP_DIR = os.path.join(BASE_DIR, "templates")
 SECRET_KEY = config('SECRET_KEY')
 #SECRET_KEY = 'django-insecure-8!05j@)%g7lnr408)k99+*x8g8*d-h$^8=&8c()+x)@qd5*6#5'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+# Debug: Print environment to logs
+print("=== ENVIRONMENT DEBUG ===")
+print(f"PORT: {os.environ.get('PORT')}")
+print(f"DATABASE_URL exists: {bool(os.environ.get('DATABASE_URL'))}")
+print("========================")
 ALLOWED_HOSTS = [
     '*',  # This allows all hosts - fine for App Platform
 ]
